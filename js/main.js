@@ -57,7 +57,7 @@ if (form) {
     f.addEventListener('blur',  () => validate(f));
   });
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const fields = [...form.querySelectorAll('[required]')];
     const ok = fields.map(validate).every(Boolean);
@@ -67,9 +67,28 @@ if (form) {
     btn.textContent = 'Sending…';
     btn.disabled = true;
 
-    setTimeout(() => {
+    const data = {
+      name:    form.querySelector('#name').value.trim(),
+      email:   form.querySelector('#email').value.trim(),
+      subject: form.querySelector('#subject').value.trim(),
+      message: form.querySelector('#message').value.trim(),
+    };
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Server error');
       form.style.display = 'none';
       successPanel.classList.add('show');
-    }, 1100);
+    } catch (err) {
+      console.error('Contact form error:', err);
+      btn.textContent = 'Send Message';
+      btn.disabled = false;
+      const errEl = document.querySelector('.form-api-err');
+      if (errEl) { errEl.textContent = 'Something went wrong. Please try again.'; errEl.style.display = 'block'; }
+    }
   });
 }
